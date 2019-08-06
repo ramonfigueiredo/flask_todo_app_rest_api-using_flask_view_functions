@@ -22,10 +22,10 @@ The tasks resource use HTTP methods as follows:
 
 | HTTP method |	URI | Example | Action |
 | ----------- | --- | ------- | ------ |
-| **GET** | http://[hostname]/todo/api/v1.0/task | curl -i http://localhost:5000/todo/api/v1.0/tasks | Retrieve list of tasks |
-| **GET** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | curl -i http://localhost:5000/todo/api/v1.0/tasks/1 | Retrieve a task |
-| **POST** | http://[hostname]/todo/api/v1.0/tasks | curl -i -H "Content-Type: application/json" -X POST -d '{"title":"Read a book"}' http://localhost:5000/todo/api/v1.0/tasks | Create a new task |
-| **PUT** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | [http://localhost:5000/todo/api/v1.0/tasks](http://localhost:5000/todo/api/v1.0/tasks) | Update an existing task |
+| **GET** | http://[hostname]/todo/api/v1.0/task | curl -i http://localhost:5000/todo/api/v1.0/tasks -u user1:passord | Retrieve list of tasks |
+| **GET** | http://[hostname]/todo/api/v1.0/tasks/[task_id] -u user1:passord | curl -i http://localhost:5000/todo/api/v1.0/tasks/1 -u user1:passord | Retrieve a task |
+| **POST** | http://[hostname]/todo/api/v1.0/tasks -u user1:passord | curl -i -H "Content-Type: application/json" -X POST -d '{"title":"Read a book"}' http://localhost:5000/todo/api/v1.0/tasks | Create a new task |
+| **PUT** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | curl -i -H "Content-Type: application/json" -X PUT -d '{"done":true}' http://localhost:5000/todo/api/v1.0/tasks/2 -u user1:password | Update an existing task |
 | **DELETE** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | curl -X DELETE http://localhost:5000/todo/api/v1.0/tasks/2 | Delete a task |
 
 ## How to run the application
