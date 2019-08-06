@@ -3,7 +3,7 @@
 ## Table of contents
 
 - [About](#about)
-- [How to run](#how-to-run)
+- [How to run the application?](#how-to-run-application)
 
 ## About
 
@@ -28,7 +28,7 @@ The tasks resource use HTTP methods as follows:
 | **PUT** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | [http://localhost:5000/todo/api/v1.0/tasks](http://localhost:5000/todo/api/v1.0/tasks) | Update an existing task |
 | **DELETE** | http://[hostname]/todo/api/v1.0/tasks/[task_id] | curl -X DELETE http://localhost:5000/todo/api/v1.0/tasks/2 | Delete a task |
 
-## How to run
+## How to run the application?
 
 1. Install [virtualenv](https://virtualenv.pypa.io/en/latest/) and [Flask](https://palletsprojects.com/p/flask/)
 	* To activate the virtualenv on Linux or MacOS: ```source venv/bin/activate```
