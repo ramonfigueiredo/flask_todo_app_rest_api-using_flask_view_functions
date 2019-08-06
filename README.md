@@ -1,4 +1,4 @@
-# TODO list application - Simple REST api
+# TODO list application - REST api using Flask-HTTPAuth
 
 ## Table of contents
 
