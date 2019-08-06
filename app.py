@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, abort, make_response, request
+from flask import Flask, jsonify, abort, make_response, request, url_for
 
 
 app = Flask(__name__)
@@ -18,6 +18,50 @@ tasks = [
         'done': False
     }
 ]
+
+
+'''
+All we are doing here is taking a task from our database and creating a new task 
+that has all the fields except id, which gets replaced with another field called uri, 
+generated with Flask's url_for.
+
+For example: When we return the list of tasks we pass them through this function 
+before sending them to the client.
+
+curl -i http://localhost:5000/todo/api/v1.0/tasks
+
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 405
+Server: Werkzeug/0.15.5 Python/3.7.4
+Date: Tue, 06 Aug 2019 18:43:21 GMT
+
+{
+  "tasks": [
+    {
+      "description": "Milk, Cheese, Pizza, Fruits, Meat", 
+      "done": false, 
+      "title": "Buy groceries", 
+      "uri": "http://localhost:5000/todo/api/v1.0/tasks/1"
+    }, 
+    {
+      "description": "Need to find a good Python tutorial on the web", 
+      "done": false, 
+      "title": "Learn Python", 
+      "uri": "http://localhost:5000/todo/api/v1.0/tasks/2"
+    }
+  ]
+}
+'''
+def make_public_task(task):
+  new_task = {}
+  for field in task:
+    if field == 'id':
+      new_task['uri'] = url_for('get_task', task_id=task['id'], _external=True)
+    else:
+      new_task[field] = task[field]
+  return new_task
+
 
 '''
 GET: Retrieve list of tasks
@@ -54,7 +98,7 @@ Date: Tue, 06 Aug 2019 15:36:15 GMT
 '''
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
 def get_tasks():
-	return jsonify({'tasks': tasks})
+	return jsonify({'tasks': [make_public_task(task) for task in tasks]})
 
 
 '''
@@ -101,7 +145,7 @@ def get_task(task_id):
 	task = [task for task in tasks if task['id'] == task_id]
 	if len(task) == 0:
 		abort(404)
-	return jsonify({'task': task[0]})
+	return jsonify({'task': make_public_task(task[0])})
 
 '''
 Return the 404 error in json format
@@ -147,7 +191,7 @@ def create_task():
 		'done': False
 	}
 	tasks.append(task)
-	return jsonify({'task': task}), 201
+	return jsonify({'task': [make_public_task(task) for task in tasks]}), 201
 
 
 '''
@@ -192,7 +236,7 @@ def update_task(task_id):
 	task[0]['title'] = request.json.get('title', task[0]['title'])
 	task[0]['description'] = request.json.get('description', task[0]['description'])
 	task[0]['done'] = request.json.get('done', task[0]['done'])
-	return jsonify({'task': task[0]})
+	return jsonify({'task': make_public_task(task[0])})
 
 
 '''
