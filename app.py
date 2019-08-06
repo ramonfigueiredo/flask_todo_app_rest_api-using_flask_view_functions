@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, abort, make_response, request, url_for
+from flask_httpauth import HTTPBasicAuth
 
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
 
 
 tasks = [
@@ -21,20 +23,60 @@ tasks = [
 
 
 '''
+In this case, the web service to only be accessible to username 'user1' 
+and password 'password'.
+
+The authentication extension gives us the freedom to choose which 
+functions in the service are open and which are protected.
+
+Use @auth.login_required choose which functions in the service are 
+protected by user and password.
+'''
+@auth.get_password
+def get_password(username):
+  if username == 'user1':
+    return 'password'
+  return None
+
+
+@auth.error_handler
+def unauthorized():
+  return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+
+'''
 All we are doing here is taking a task from our database and creating a new task 
 that has all the fields except id, which gets replaced with another field called uri, 
 generated with Flask's url_for.
 
-For example: When we return the list of tasks we pass them through this function 
+For example, when we return the list of tasks we pass them through this function 
 before sending them to the client.
+'''
+def make_public_task(task):
+  new_task = {}
+  for field in task:
+    if field == 'id':
+      new_task['uri'] = url_for('get_task', task_id=task['id'], _external=True)
+    else:
+      new_task[field] = task[field]
+  return new_task
 
-curl -i http://localhost:5000/todo/api/v1.0/tasks
+
+'''
+GET: Retrieve list of tasks
+
+
+To test: 
+
+curl -i http://localhost:5000/todo/api/v1.0/tasks -u user1:password
+
+OUTPUT:
 
 HTTP/1.0 200 OK
 Content-Type: application/json
 Content-Length: 405
 Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 18:43:21 GMT
+Date: Tue, 06 Aug 2019 19:41:58 GMT
 
 {
   "tasks": [
@@ -53,50 +95,8 @@ Date: Tue, 06 Aug 2019 18:43:21 GMT
   ]
 }
 '''
-def make_public_task(task):
-  new_task = {}
-  for field in task:
-    if field == 'id':
-      new_task['uri'] = url_for('get_task', task_id=task['id'], _external=True)
-    else:
-      new_task[field] = task[field]
-  return new_task
-
-
-'''
-GET: Retrieve list of tasks
-
-
-To test: 
-
-curl -i http://localhost:5000/todo/api/v1.0/tasks
-
-OUTPUT:
-
-HTTP/1.0 200 OK
-Content-Type: application/json
-Content-Length: 315
-Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 15:36:15 GMT
-
-{
-  "tasks": [
-    {
-      "description": "Milk, Cheese, Pizza, Fruits, Meat", 
-      "done": false, 
-      "id": 1, 
-      "title": "Buy groceries"
-    }, 
-    {
-      "description": "Need to find a good Python tutorial on the web", 
-      "done": false, 
-      "id": 2, 
-      "title": "Learn Python"
-    }
-  ]
-}
-'''
 @app.route('/todo/api/v1.0/tasks', methods=['GET'])
+@auth.login_required
 def get_tasks():
 	return jsonify({'tasks': [make_public_task(task) for task in tasks]})
 
@@ -107,26 +107,26 @@ GET: Retrieve a task by id
 
 To test:
 
-curl -i http://localhost:5000/todo/api/v1.0/tasks/1
+curl -i http://localhost:5000/todo/api/v1.0/tasks/1 -u user1:password
 
 OUTPUT:
 
 HTTP/1.0 200 OK
 Content-Type: application/json
-Content-Length: 140
+Content-Length: 185
 Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 15:36:54 GMT
+Date: Tue, 06 Aug 2019 19:46:33 GMT
 
 {
   "task": {
     "description": "Milk, Cheese, Pizza, Fruits, Meat", 
     "done": false, 
-    "id": 1, 
-    "title": "Buy groceries"
+    "title": "Buy groceries", 
+    "uri": "http://localhost:5000/todo/api/v1.0/tasks/1"
   }
 }
 
-curl -i http://localhost:5000/todo/api/v1.0/tasks/3
+curl -i http://localhost:5000/todo/api/v1.0/tasks/3 -u user1:password
 
 OUTPUT:
 
@@ -134,13 +134,14 @@ HTTP/1.0 404 NOT FOUND
 Content-Type: application/json
 Content-Length: 27
 Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 15:37:19 GMT
+Date: Tue, 06 Aug 2019 19:47:14 GMT
 
 {
   "error": "Not found"
 }
 '''
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['GET'])
+@auth.login_required
 def get_task(task_id):
 	task = [task for task in tasks if task['id'] == task_id]
 	if len(task) == 0:
@@ -161,26 +162,41 @@ POST: Create a new task
 
 To test: 
 
-curl -i -H "Content-Type: application/json" -X POST -d '{"title":"Read a book"}' http://localhost:5000/todo/api/v1.0/tasks
+curl -i -H "Content-Type: application/json" -X POST -d '{"title":"Read a book"}' http://localhost:5000/todo/api/v1.0/tasks -u user1:password
 
 OUTPUT:
 
 HTTP/1.0 201 CREATED
 Content-Type: application/json
-Content-Length: 105
+Content-Length: 556
 Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 15:38:33 GMT
+Date: Tue, 06 Aug 2019 19:50:48 GMT
 
 {
-  "task": {
-    "description": "", 
-    "done": false, 
-    "id": 3, 
-    "title": "Read a book"
-  }
+  "task": [
+    {
+      "description": "Milk, Cheese, Pizza, Fruits, Meat", 
+      "done": false, 
+      "title": "Buy groceries", 
+      "uri": "http://localhost:5000/todo/api/v1.0/tasks/1"
+    }, 
+    {
+      "description": "Need to find a good Python tutorial on the web", 
+      "done": false, 
+      "title": "Learn Python", 
+      "uri": "http://localhost:5000/todo/api/v1.0/tasks/2"
+    }, 
+    {
+      "description": "", 
+      "done": false, 
+      "title": "Read a book", 
+      "uri": "http://localhost:5000/todo/api/v1.0/tasks/3"
+    }
+  ]
 }
 '''
 @app.route('/todo/api/v1.0/tasks', methods=['POST'])
+@auth.login_required
 def create_task():
 	if not request.json or not 'title' in request.json:
 		abort(400)
@@ -200,27 +216,28 @@ PUT: Update an existing task
 
 To test:
 
-curl -i -H "Content-Type: application/json" -X PUT -d '{"done":true}' http://localhost:5000/todo/api/v1.0/tasks/2
+curl -i -H "Content-Type: application/json" -X PUT -d '{"done":true}' http://localhost:5000/todo/api/v1.0/tasks/2 -u user1:password
 
 OUTPUT:
 
 HTTP/1.0 200 OK
 Content-Type: application/json
-Content-Length: 151
+Content-Length: 196
 Server: Werkzeug/0.15.5 Python/3.7.4
-Date: Tue, 06 Aug 2019 15:39:07 GMT
+Date: Tue, 06 Aug 2019 19:51:54 GMT
 
 {
   "task": {
     "description": "Need to find a good Python tutorial on the web", 
     "done": true, 
-    "id": 2, 
-    "title": "Learn Python"
+    "title": "Learn Python", 
+    "uri": "http://localhost:5000/todo/api/v1.0/tasks/2"
   }
 }
 '''
 
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['PUT'])
+@auth.login_required
 def update_task(task_id):
 	task = [task for task in tasks if task['id'] == task_id]
 	if len(task) == 0:
@@ -245,7 +262,7 @@ DELETE: Delete a task
 
 To test:
 
-curl -X DELETE http://localhost:5000/todo/api/v1.0/tasks/2
+curl -X DELETE http://localhost:5000/todo/api/v1.0/tasks/2 -u user1:password
 
 OUTPUT
 
@@ -254,6 +271,7 @@ OUTPUT
 }
 '''
 @app.route('/todo/api/v1.0/tasks/<int:task_id>', methods=['DELETE'])
+@auth.login_required
 def delete_task(task_id):
 	task = [task for task in tasks if task['id'] == task_id]
 	if len(task) == 0:
