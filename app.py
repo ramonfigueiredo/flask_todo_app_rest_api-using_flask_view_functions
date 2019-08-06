@@ -1,25 +1,10 @@
-from flask import Flask, jsonify, abort, make_response, request, url_for
+import six
+from flask import Flask, jsonify, abort, request, make_response, url_for
 from flask_httpauth import HTTPBasicAuth
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path="")
 auth = HTTPBasicAuth()
-
-
-tasks = [
-    {
-        'id': 1,
-        'title': u'Buy groceries',
-        'description': u'Milk, Cheese, Pizza, Fruits, Meat', 
-        'done': False
-    },
-    {
-        'id': 2,
-        'title': u'Learn Python',
-        'description': u'Need to find a good Python tutorial on the web', 
-        'done': False
-    }
-]
 
 
 '''
@@ -41,7 +26,43 @@ def get_password(username):
 
 @auth.error_handler
 def unauthorized():
+  '''
+  Return 403 instead of 401 to prevent browsers from displaying the default
+  auth dialog
+  '''
   return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+
+@app.errorhandler(400)
+def bad_request(error):
+  '''
+  Return the 400 error in json format
+  '''
+  return make_response(jsonify({'error': 'Bad request'}), 400)  
+
+
+@app.errorhandler(404)
+def not_found(error):
+  '''
+  Return the 404 error in json format
+  '''
+  return make_response(jsonify({'error': 'Not found'}), 404) 
+
+
+tasks = [
+    {
+        'id': 1,
+        'title': u'Buy groceries',
+        'description': u'Milk, Cheese, Pizza, Fruits, Meat', 
+        'done': False
+    },
+    {
+        'id': 2,
+        'title': u'Learn Python',
+        'description': u'Need to find a good Python tutorial on the web', 
+        'done': False
+    }
+] 
 
 
 '''
@@ -148,13 +169,6 @@ def get_task(task_id):
 		abort(404)
 	return jsonify({'task': make_public_task(task[0])})
 
-'''
-Return the 404 error in json format
-'''
-@app.errorhandler(404)
-def not_found(error):
-	return make_response(jsonify({'error': 'Not found'}), 404)	
-
 
 '''
 POST: Create a new task
@@ -201,13 +215,13 @@ def create_task():
 	if not request.json or not 'title' in request.json:
 		abort(400)
 	task = {
-		'id': tasks[-1]['id'] + 1,
+		'id': tasks[-1]['id'] + 1 if len(tasks) > 0 else 1,
 		'title': request.json['title'],
 		'description': request.json.get('description', ""),
 		'done': False
 	}
 	tasks.append(task)
-	return jsonify({'task': [make_public_task(task) for task in tasks]}), 201
+	return jsonify({'task': make_public_task(task)}), 201
 
 
 '''
@@ -244,9 +258,11 @@ def update_task(task_id):
 		abort(404)
 	if not request.json:
 		abort(400)
-	if 'title' in request.json and type(request.json['title']) != unicode:
+	if 'title' in request.json and \
+        not isinstance(request.json['title'], six.string_types):
 		abort(400)
-	if 'description' in request.json and type(request.json['description']) is not unicode:
+	if 'description' in request.json and \
+        not isinstance(request.json['description'], six.string_types):
 		abort(400)
 	if 'done' in request.json and type(request.json['done']) is not bool:
 		abort(400)
