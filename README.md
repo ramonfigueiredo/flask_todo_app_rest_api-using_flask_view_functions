@@ -13,10 +13,10 @@ In place of a database we will store our task list in a memory structure. This w
 
 Each entry in the array has the following fields:
 
-	id: 			unique identifier for tasks. Numeric type.
-	title: 			short task description. String type.
-	description: 	long task description. Text type.
-	done: 			task completion state. Boolean type.
+	**id:** unique identifier for tasks. Numeric type.
+	**title:** short task description. String type.
+	**description:** long task description. Text type.
+	**done:** task completion state. Boolean type.
 
 The tasks resource use HTTP methods as follows:
 
