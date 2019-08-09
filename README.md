@@ -39,14 +39,19 @@ The tasks resource use HTTP methods as follows:
 Step-by-step:
 
 ```sh
-cd flask_todo_app_simple_rest_api/
+cd flask_todo_app_rest_api-using_flask_view_functions/
 
 virtualenv venv
 
 source venv/bin/activate
 
-pip install flask
+pip install -r requirements.txt
 
 python app.py
 ```
 
+**Note**: To desactivate the virtual environment
+
+```sh
+deactivate
+```
