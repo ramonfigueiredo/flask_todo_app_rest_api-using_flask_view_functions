@@ -1,4 +1,4 @@
-# TODO list application - REST api using Flask-HTTPAuth
+# TODO list application - REST api using regular Flask view functions to define all the routes
 
 ## Table of contents
 
